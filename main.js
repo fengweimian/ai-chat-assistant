@@ -3,10 +3,12 @@ const path = require('path');
 const Store = require('./src/main/store');
 
 const ApiClient = require('./src/main/api');
+const PptGenerator = require('./src/main/pptGenerator');
 
 let mainWindow;
 const store = new Store();
 const apiClient = new ApiClient();
+const pptGenerator = new PptGenerator();
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -54,6 +56,19 @@ ipcMain.on('chat:send', (event, { conversationId, content, images }) => {
 // Settings update
 ipcMain.on('settings:update', (_, settings) => {
   apiClient.configure(settings.baseUrl, settings.apiKey);
+});
+
+// PPT generation
+ipcMain.handle('ppt:generate', async (_, pptData) => {
+  try {
+    return await pptGenerator.generate(pptData);
+  } catch (e) {
+    throw new Error(`PPT generation failed: ${e.message}`);
+  }
+});
+
+ipcMain.handle('ppt:detect', (_, text) => {
+  return pptGenerator.detectPptxRequest(text);
 });
 
 // Window controls
