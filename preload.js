@@ -36,6 +36,11 @@ contextBridge.exposeInMainWorld('api', {
     generate: (data) => ipcRenderer.invoke('ppt:generate', data),
     detect: (text) => ipcRenderer.invoke('ppt:detect', text)
   },
+  // File
+  file: {
+    save: (sourcePath, suggestedName) => ipcRenderer.invoke('file:save', sourcePath, suggestedName),
+    openLocation: (filePath) => ipcRenderer.invoke('file:openLocation', filePath)
+  },
   // Window controls
   window: {
     minimize: () => ipcRenderer.send('window:minimize'),

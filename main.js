@@ -4,11 +4,13 @@ const Store = require('./src/main/store');
 
 const ApiClient = require('./src/main/api');
 const PptGenerator = require('./src/main/pptGenerator');
+const DownloadManager = require('./src/main/download');
 
 let mainWindow;
 const store = new Store();
 const apiClient = new ApiClient();
 const pptGenerator = new PptGenerator();
+const downloadManager = new DownloadManager();
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -69,6 +71,15 @@ ipcMain.handle('ppt:generate', async (_, pptData) => {
 
 ipcMain.handle('ppt:detect', (_, text) => {
   return pptGenerator.detectPptxRequest(text);
+});
+
+// File download
+ipcMain.handle('file:save', async (_, sourcePath, suggestedName) => {
+  return await downloadManager.saveFile(sourcePath, suggestedName);
+});
+
+ipcMain.handle('file:openLocation', (_, filePath) => {
+  downloadManager.openInExplorer(filePath);
 });
 
 // Window controls
