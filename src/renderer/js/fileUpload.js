@@ -1,8 +1,3 @@
-const CONSTANTS = {
-  MAX_IMAGE_SIZE: 10 * 1024 * 1024,
-  SUPPORTED_IMAGE_TYPES: ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
-};
-
 const FileUploader = (() => {
   let attachedImages = [];
 
