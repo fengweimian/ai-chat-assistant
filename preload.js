@@ -31,6 +31,11 @@ contextBridge.exposeInMainWorld('api', {
   },
   // Settings
   updateSettings: (settings) => ipcRenderer.send('settings:update', settings),
+  // PPT
+  ppt: {
+    generate: (data) => ipcRenderer.invoke('ppt:generate', data),
+    detect: (text) => ipcRenderer.invoke('ppt:detect', text)
+  },
   // Window controls
   window: {
     minimize: () => ipcRenderer.send('window:minimize'),
