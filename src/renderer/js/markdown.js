@@ -1,40 +1,32 @@
 const MarkdownRenderer = (() => {
-  let markedInstance = null;
-  let hljsInstance = null;
+  let configured = false;
 
   function init() {
-    if (typeof marked !== 'undefined') {
-      markedInstance = marked;
-      markedInstance.setOptions({
-        breaks: true,
-        gfm: true,
-        highlight: function (code, lang) {
-          if (hljsInstance && lang && hljsInstance.getLanguage(lang)) {
-            return hljsInstance.highlight(code, { language: lang }).value;
-          }
-          return code;
+    if (configured) return;
+    if (typeof marked === 'undefined') return;
+
+    // Use custom renderer for code blocks with highlight.js
+    const renderer = {
+      code({ text, lang }) {
+        let highlighted = text;
+        if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+          highlighted = hljs.highlight(text, { language: lang }).value;
+        } else if (typeof hljs !== 'undefined') {
+          highlighted = hljs.highlightAuto(text).value;
         }
-      });
-    }
-    if (typeof hljs !== 'undefined') {
-      hljsInstance = hljs;
-    }
+        return `<pre><button class="copy-btn" onclick="MarkdownRenderer.copyCode(this)">复制</button><code class="language-${lang || ''}">${highlighted}</code></pre>`;
+      }
+    };
+
+    marked.use({ renderer, breaks: true, gfm: true });
+    configured = true;
   }
 
   function render(text) {
-    if (!markedInstance) init();
-    if (!markedInstance) return escapeHtml(text);
+    if (!configured) init();
+    if (typeof marked === 'undefined') return escapeHtml(text);
 
-    let html = markedInstance.parse(text);
-
-    // Add copy buttons to code blocks
-    html = html.replace(/<pre><code class="language-(\w+)">/g,
-      '<pre><button class="copy-btn" onclick="MarkdownRenderer.copyCode(this)">复制</button><code class="language-$1 hljs">');
-
-    html = html.replace(/<pre><code>/g,
-      '<pre><button class="copy-btn" onclick="MarkdownRenderer.copyCode(this)">复制</button><code>');
-
-    return html;
+    return marked.parse(text);
   }
 
   function escapeHtml(text) {
