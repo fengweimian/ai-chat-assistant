@@ -4,8 +4,137 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Chat Assistant</title>
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
 </head>
 <body>
-  <h1>Loading...</h1>
+  <!-- Title Bar -->
+  <div id="titlebar">
+    <div class="titlebar-drag">
+      <span class="app-title">AI Chat Assistant</span>
+    </div>
+    <div class="titlebar-controls">
+      <button id="btn-minimize" class="titlebar-btn" title="最小化">&#x2500;</button>
+      <button id="btn-maximize" class="titlebar-btn" title="最大化">&#x25A1;</button>
+      <button id="btn-close" class="titlebar-btn btn-close" title="关闭">&#x2715;</button>
+    </div>
+  </div>
+
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <button id="btn-new-chat" class="btn-new-chat">+ 新对话</button>
+      </div>
+      <div id="conversation-list" class="conversation-list"></div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content">
+      <!-- Settings Bar -->
+      <div id="settings-bar">
+        <div class="setting-group">
+          <label>模型</label>
+          <select id="setting-model">
+            <option value="gpt-5.5">GPT-5.5</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label>联网</label>
+          <label class="toggle">
+            <input type="checkbox" id="setting-web-search" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-group">
+          <label>思考</label>
+          <select id="setting-thinking">
+            <option value="low">低</option>
+            <option value="medium" selected>中</option>
+            <option value="high">高</option>
+            <option value="xhigh">极高</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <button id="btn-settings" class="btn-icon" title="详细设置">&#9881;</button>
+        </div>
+      </div>
+
+      <!-- Chat Area -->
+      <div id="chat-area">
+        <div id="messages" class="messages">
+          <div class="welcome-message">
+            <h2>你好！有什么可以帮你的？</h2>
+            <p>你可以问我任何问题，或者让我帮你生成PPT、分析图片等。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div id="input-area">
+        <div id="image-preview" class="image-preview" style="display:none;"></div>
+        <div class="input-row">
+          <button id="btn-attach" class="btn-icon" title="上传图片">&#128206;</button>
+          <textarea id="message-input" placeholder="输入消息... (Enter 发送, Shift+Enter 换行)" rows="1"></textarea>
+          <button id="btn-send" class="btn-send" title="发送">&#9654;</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal" style="display:none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>设置</h3>
+        <button id="btn-close-settings" class="btn-icon">&times;</button>
+      </div>
+      <div class="modal-body">
+        <section class="settings-section">
+          <h4>API 配置</h4>
+          <div class="form-group">
+            <label>API 地址</label>
+            <input type="text" id="cfg-api-url" value="https://REDACTED">
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" id="cfg-api-key" value="">
+          </div>
+          <button id="btn-test-connection" class="btn-secondary">测试连接</button>
+        </section>
+        <section class="settings-section">
+          <h4>模型设置</h4>
+          <div class="form-group">
+            <label>Temperature: <span id="temp-value">0.7</span></label>
+            <input type="range" id="cfg-temperature" min="0" max="2" step="0.1" value="0.7">
+          </div>
+          <div class="form-group">
+            <label>Max Tokens</label>
+            <input type="number" id="cfg-max-tokens" value="4096" min="1" max="128000">
+          </div>
+          <div class="form-group">
+            <label>System Prompt</label>
+            <textarea id="cfg-system-prompt" rows="4"></textarea>
+          </div>
+        </section>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-save-settings" class="btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input -->
+  <input type="file" id="file-input" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none;">
+
+  <!-- Scripts -->
+  <script src="js/markdown.js"></script>
+  <script src="js/fileUpload.js"></script>
+  <script src="js/fileRender.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
