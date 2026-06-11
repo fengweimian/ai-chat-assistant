@@ -1,0 +1,18 @@
+{
+  "name": "ai-chat-assistant",
+  "version": "1.0.0",
+  "description": "Electron AI Chat Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "dependencies": {
+    "marked": "^15.0.0",
+    "highlight.js": "^11.11.0",
+    "pptxgenjs": "^3.12.0"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0"
+  }
+}
