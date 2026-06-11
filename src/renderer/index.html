@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Chat Assistant</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
   <link rel="stylesheet" href="styles/main.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+  <link rel="stylesheet" href="styles/highlight-dark.css">
 </head>
 <body>
   <!-- Title Bar -->
@@ -128,9 +129,9 @@
   <!-- Hidden file input -->
   <input type="file" id="file-input" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none;">
 
-  <!-- External Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.0/marked.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+  <!-- Libraries -->
+  <script src="js/marked.min.js"></script>
+  <script src="js/highlight.min.js"></script>
 
   <!-- App Scripts -->
   <script src="js/markdown.js"></script>
