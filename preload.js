@@ -10,6 +10,27 @@ contextBridge.exposeInMainWorld('api', {
     addMessage: (convId, message) => ipcRenderer.invoke('conversations:addMessage', convId, message),
     delete: (id) => ipcRenderer.invoke('conversations:delete', id)
   },
+  // Chat
+  chat: {
+    send: (data) => ipcRenderer.send('chat:send', data),
+    onChunk: (callback) => {
+      const handler = (_, data) => callback(data);
+      ipcRenderer.on('chat:chunk', handler);
+      return () => ipcRenderer.removeListener('chat:chunk', handler);
+    },
+    onDone: (callback) => {
+      const handler = (_, data) => callback(data);
+      ipcRenderer.on('chat:done', handler);
+      return () => ipcRenderer.removeListener('chat:done', handler);
+    },
+    onError: (callback) => {
+      const handler = (_, data) => callback(data);
+      ipcRenderer.on('chat:error', handler);
+      return () => ipcRenderer.removeListener('chat:error', handler);
+    }
+  },
+  // Settings
+  updateSettings: (settings) => ipcRenderer.send('settings:update', settings),
   // Window controls
   window: {
     minimize: () => ipcRenderer.send('window:minimize'),
