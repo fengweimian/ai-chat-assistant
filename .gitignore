@@ -4,3 +4,4 @@ data/
 *.asar
 Thumbs.db
 *.log
+static/*.paf.exe
