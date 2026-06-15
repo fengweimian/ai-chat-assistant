@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Chat Assistant</title>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: file:; connect-src 'self' https:; frame-src 'self' file:;">
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/highlight-dark.css">
+  <link rel="stylesheet" href="../../node_modules/katex/dist/katex.min.css">
 </head>
 <body>
   <!-- Title Bar -->
@@ -25,7 +26,11 @@
     <!-- Sidebar -->
     <aside id="sidebar">
       <div class="sidebar-header">
-        <button id="btn-new-chat" class="btn-new-chat">+ 新对话</button>
+        <div class="sidebar-header-row">
+          <button id="btn-new-chat" class="btn-new-chat">+ 新对话</button>
+          <button id="btn-new-window" class="btn-new-window" title="新建窗口">⧉</button>
+        </div>
+        <input id="search-input" type="text" placeholder="搜索对话...">
       </div>
       <div id="conversation-list" class="conversation-list"></div>
     </aside>
@@ -36,9 +41,7 @@
       <div id="settings-bar">
         <div class="setting-group">
           <label>模型</label>
-          <select id="setting-model">
-            <option value="gpt-5.5">GPT-5.5</option>
-          </select>
+          <select id="setting-model"></select>
         </div>
         <div class="setting-group">
           <label>联网</label>
@@ -57,6 +60,29 @@
           </select>
         </div>
         <div class="setting-group">
+          <label>面具</label>
+          <select id="setting-mask">
+            <option value="">无</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label>开发者</label>
+          <label class="toggle">
+            <input type="checkbox" id="setting-developer" disabled>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-group">
+          <button id="btn-notes" class="btn-icon" title="笔记">&#128221;</button>
+          <div class="export-wrapper">
+            <button id="btn-export" class="btn-icon" title="导出对话">&#11015;</button>
+            <div id="export-menu" class="export-menu" style="display:none;">
+              <button data-format="markdown">Markdown (.md)</button>
+              <button data-format="pdf">PDF (.pdf)</button>
+              <button data-format="docx">Word (.docx)</button>
+            </div>
+          </div>
+          <button id="btn-theme" class="btn-icon" title="切换主题">&#9790;</button>
           <button id="btn-settings" class="btn-icon" title="详细设置">&#9881;</button>
         </div>
       </div>
@@ -71,16 +97,76 @@
         </div>
       </div>
 
+      <!-- Console Panel -->
+      <div id="console-panel" class="console-panel" style="display:none;">
+        <div id="console-resize-handle" class="console-resize-handle"></div>
+        <div class="console-header">
+          <span>📟 控制台</span>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <select id="console-lang" class="console-lang-select">
+              <option value="cmd">CMD</option>
+              <option value="powershell">PowerShell</option>
+              <option value="python">Python</option>
+              <option value="node">Node.js</option>
+            </select>
+            <button id="btn-console-interrupt" class="console-btn" title="中断 (Ctrl+C)">⏸</button>
+            <button id="btn-console-restart" class="console-btn" title="重启终端">🔄</button>
+            <button id="btn-console-clear" class="console-btn">清空</button>
+            <button id="btn-console-close" class="console-btn">✕</button>
+          </div>
+        </div>
+        <div id="console-output" class="console-output"></div>
+        <div class="console-input-row">
+          <span class="console-input-prefix">&gt;</span>
+          <input type="text" id="console-input" class="console-input" placeholder="输入命令... Enter 发送">
+          <button id="btn-console-send" class="console-btn">▶</button>
+        </div>
+      </div>
+
       <!-- Input Area -->
       <div id="input-area">
         <div id="image-preview" class="image-preview" style="display:none;"></div>
         <div class="input-row">
-          <button id="btn-attach" class="btn-icon" title="上传图片">&#128206;</button>
-          <textarea id="message-input" placeholder="输入消息... (Enter 发送, Shift+Enter 换行)" rows="1"></textarea>
+          <button id="btn-prompts" class="btn-icon" title="快捷指令">&#9889;</button>
+          <button id="btn-attach" class="btn-icon" title="上传文件">&#128206;</button>
+          <div id="input-container" class="input-container">
+            <textarea id="message-input" placeholder="输入消息... (Enter 发送, Shift+Enter 换行)" rows="1"></textarea>
+            <div id="md-preview" class="md-preview" style="display:none;"></div>
+          </div>
+          <button id="btn-preview" class="btn-icon" title="Markdown预览">&#128065;</button>
+          <button id="btn-console" class="btn-icon" title="控制台">&#128421;</button>
           <button id="btn-send" class="btn-send" title="发送">&#9654;</button>
         </div>
+        <div id="token-stats" class="token-stats"></div>
       </div>
     </main>
+  </div>
+
+  <!-- Notes Panel -->
+  <div id="notes-panel" class="modal" style="display:none;">
+    <div class="modal-overlay" onclick="document.getElementById('notes-panel').style.display='none'"></div>
+    <div class="modal-content prompts-content">
+      <div class="modal-header">
+        <h3>📝 笔记</h3>
+        <button class="btn-icon" onclick="document.getElementById('notes-panel').style.display='none'">&times;</button>
+      </div>
+      <div class="notes-panel-body">
+        <input type="text" id="notes-search" placeholder="搜索笔记..." class="notes-search-input">
+        <div id="notes-list" class="notes-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompts Panel -->
+  <div id="prompts-panel" class="modal" style="display:none;">
+    <div class="prompts-overlay modal-overlay"></div>
+    <div class="modal-content prompts-content">
+      <div class="modal-header">
+        <h3>快捷指令</h3>
+        <button class="prompts-close btn-icon">&times;</button>
+      </div>
+      <div id="prompts-list" class="prompts-list"></div>
+    </div>
   </div>
 
   <!-- Settings Modal -->
@@ -93,19 +179,108 @@
       </div>
       <div class="modal-body">
         <section class="settings-section">
-          <h4>API 配置</h4>
-          <div class="form-group">
-            <label>API 地址</label>
-            <input type="text" id="cfg-api-url" value="https://REDACTED">
+          <h4>头像设置</h4>
+          <div class="avatar-setting">
+            <div id="avatar-preview" class="avatar-preview">👤</div>
+            <button id="btn-change-avatar" class="btn-secondary">更换头像</button>
           </div>
-          <div class="form-group">
-            <label>API Key</label>
-            <input type="password" id="cfg-api-key" value="">
-          </div>
-          <button id="btn-test-connection" class="btn-secondary">测试连接</button>
         </section>
         <section class="settings-section">
-          <h4>模型设置</h4>
+          <h4>模型管理</h4>
+          <div id="model-list" class="model-list"></div>
+          <button id="btn-add-model" class="btn-secondary">+ 添加模型</button>
+          <div id="model-form" class="model-form" style="display:none;">
+            <div class="form-group">
+              <label>显示名称</label>
+              <input type="text" id="mf-name" placeholder="如: GPT-5.5">
+            </div>
+            <div class="form-group">
+              <label>模型 ID</label>
+              <input type="text" id="mf-model-id" placeholder="如: gpt-5.5">
+            </div>
+            <div class="form-group">
+              <label>类型</label>
+              <select id="mf-type">
+                <option value="chat">对话</option>
+                <option value="image">生图</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>API 格式</label>
+              <select id="mf-api-format">
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Gemini</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>API 地址</label>
+              <input type="text" id="mf-base-url" placeholder="https://api.example.com/v1">
+            </div>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="password" id="mf-api-key">
+            </div>
+            <div class="form-group">
+              <label>思考模式</label>
+              <select id="mf-thinking-mode">
+                <option value="none">无（不支持思考）</option>
+                <option value="suffix">后缀模式（拼接到模型名，如 GPT-5.5）</option>
+                <option value="param">参数模式（发送 reasoning_effort，如 DeepSeek）</option>
+              </select>
+            </div>
+            <div id="mf-image-options" style="display:none;">
+              <div class="form-group">
+                <label>宽高比</label>
+                <select id="mf-aspect-ratio">
+                  <option value="1:1">1:1</option>
+                  <option value="16:9">16:9</option>
+                  <option value="9:16">9:16</option>
+                  <option value="4:3">4:3</option>
+                  <option value="3:4">3:4</option>
+                  <option value="3:2">3:2</option>
+                  <option value="2:3">2:3</option>
+                  <option value="21:9">21:9</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>分辨率</label>
+                <select id="mf-image-size">
+                  <option value="1K">1K</option>
+                  <option value="2K">2K</option>
+                  <option value="4K">4K</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>生成数量: <span id="mf-sample-value">1</span></label>
+                <input type="range" id="mf-sample-count" min="1" max="4" step="1" value="1">
+              </div>
+            </div>
+            <div class="form-group form-actions">
+              <button id="mf-test" class="btn-secondary">测试连接</button>
+              <button id="mf-save" class="btn-primary">保存</button>
+              <button id="mf-cancel" class="btn-secondary">取消</button>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <h4>联网搜索</h4>
+          <div class="form-group">
+            <label>Tavily API Key</label>
+            <input type="password" id="cfg-tavily-key" placeholder="tvly-xxx">
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">开启联网搜索时，AI 会通过 Tavily 获取实时信息。免费注册: tavily.com</p>
+        </section>
+        <section class="settings-section">
+          <h4>邮件配置</h4>
+          <div class="form-group"><label>邮箱地址</label><input type="email" id="cfg-email" placeholder="your@email.com"></div>
+          <div class="form-group"><label>密码/授权码</label><input type="password" id="cfg-email-pass"></div>
+          <div class="form-group"><label>SMTP 服务器</label><input type="text" id="cfg-smtp-host" placeholder="smtp.example.com"></div>
+          <div class="form-group"><label>SMTP 端口</label><input type="number" id="cfg-smtp-port" value="465"></div>
+          <div class="form-group"><label>IMAP 服务器</label><input type="text" id="cfg-imap-host" placeholder="imap.example.com"></div>
+          <div class="form-group"><label>IMAP 端口</label><input type="number" id="cfg-imap-port" value="993"></div>
+        </section>
+        <section class="settings-section">
+          <h4>对话设置</h4>
           <div class="form-group">
             <label>Temperature: <span id="temp-value">0.7</span></label>
             <input type="range" id="cfg-temperature" min="0" max="2" step="0.1" value="0.7">
@@ -116,8 +291,32 @@
           </div>
           <div class="form-group">
             <label>System Prompt</label>
-            <textarea id="cfg-system-prompt" rows="4"></textarea>
+            <textarea id="cfg-system-prompt" rows="4" placeholder="留空使用默认提示词"></textarea>
           </div>
+        </section>
+        <section class="settings-section">
+          <h4>文件预览增强</h4>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <span id="lo-status-dot" class="status-dot off">●</span>
+            <span id="lo-status-text">正在检测...</span>
+          </div>
+          <button id="btn-install-lo" class="btn-secondary">安装 LibreOffice Portable</button>
+          <p style="font-size:11px;color:var(--text-muted);margin:6px 0;">安装后可获得 Word/Excel/PPT 的完整预览（含排版、图形、图表）</p>
+          <div class="form-group" style="margin-top:12px;">
+            <label>或手动指定路径（soffice.exe）</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="cfg-lo-path" placeholder="自动检测" readonly style="flex:1;">
+              <button id="btn-browse-lo" class="btn-secondary">浏览</button>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <h4>数据目录</h4>
+          <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+            <input type="text" id="cfg-data-dir" readonly style="flex:1;">
+            <button id="btn-open-data-dir" class="btn-secondary">打开文件夹</button>
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:6px;">上传的文件、对话记录、模型配置、生成图片等均存储在此目录。可手动清理释放空间。</p>
         </section>
       </div>
       <div class="modal-footer">
@@ -126,17 +325,46 @@
     </div>
   </div>
 
+  <!-- File Preview Panel -->
+  <div id="file-preview-panel" class="file-preview-panel" style="display:none;">
+    <div class="preview-overlay"></div>
+    <div class="preview-container">
+      <div class="preview-header">
+        <span class="preview-title">文件预览</span>
+        <button class="preview-close btn-icon">&times;</button>
+      </div>
+      <div class="preview-body"></div>
+    </div>
+  </div>
+
+  <!-- Image Lightbox -->
+  <div id="image-lightbox" class="lightbox" style="display:none;">
+    <button class="lightbox-close">&times;</button>
+    <img class="lightbox-img" src="">
+  </div>
+
+  <!-- Image Context Menu -->
+  <div id="img-context-menu" class="context-menu" style="display:none;">
+    <button id="ctx-download-img">下载图片</button>
+  </div>
+
   <!-- Hidden file input -->
-  <input type="file" id="file-input" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none;">
+  <input type="file" id="file-input" accept="image/png,image/jpeg,image/gif,image/webp,.docx,.doc,.xlsx,.xls,.csv,.pptx,.ppt,.pdf,.txt,.md,.json" multiple style="display:none;">
 
   <!-- Libraries -->
   <script src="js/marked.min.js"></script>
   <script src="js/highlight.min.js"></script>
+  <script src="../../node_modules/katex/dist/katex.min.js"></script>
+  <script src="../../node_modules/mermaid/dist/mermaid.min.js"></script>
+  <script src="../../node_modules/chart.js/dist/chart.umd.js"></script>
 
   <!-- App Scripts -->
   <script src="js/markdown.js"></script>
   <script src="js/fileUpload.js"></script>
   <script src="js/fileRender.js"></script>
+  <script src="js/prompts.js"></script>
+  <script src="js/filePreview.js"></script>
+  <script src="js/imageViewer.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/sidebar.js"></script>
   <script src="js/settings.js"></script>
