@@ -1,11 +1,13 @@
 const fs = require('fs');
 const path = require('path');
+const { app } = require('electron');
 
 class Store {
   constructor() {
-    this.dataDir = path.join(__dirname, '../../data');
+    this.dataDir = path.join(app.getPath('userData'), 'data');
     this.filePath = path.join(this.dataDir, 'conversations.json');
     this.conversations = [];
+    this._saveTimer = null;
     this.load();
   }
 
@@ -22,14 +24,26 @@ class Store {
   }
 
   save() {
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => this._doSave(), 300);
+  }
+
+  _doSave() {
     try {
       if (!fs.existsSync(this.dataDir)) {
         fs.mkdirSync(this.dataDir, { recursive: true });
       }
-      fs.writeFileSync(this.filePath, JSON.stringify(this.conversations, null, 2), 'utf-8');
+      const tmp = this.filePath + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(this.conversations, null, 2), 'utf-8');
+      fs.renameSync(tmp, this.filePath);
     } catch (e) {
       console.error('Failed to save conversations:', e);
     }
+  }
+
+  flush() {
+    clearTimeout(this._saveTimer);
+    this._doSave();
   }
 
   getAll() {
@@ -79,6 +93,16 @@ class Store {
       conv.updatedAt = Date.now();
       this.save();
     }
+  }
+
+  removeLastMessage(convId) {
+    const conv = this.getById(convId);
+    if (conv && conv.messages.length > 0) {
+      conv.messages.pop();
+      conv.updatedAt = Date.now();
+      this.save();
+    }
+    return conv;
   }
 
   delete(id) {

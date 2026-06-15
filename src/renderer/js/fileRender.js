@@ -1,12 +1,16 @@
 const FileRenderer = (() => {
-  const FILE_ICONS = {
-    pptx: '📊',
-    ppt: '📊',
-    docx: '📝',
-    doc: '📝',
-    pdf: '📄',
-    xlsx: '📈',
-    csv: '📈',
+  const FILE_ICON_IMAGES = {
+    pptx: '../../static/images/ppt.png',
+    ppt: '../../static/images/ppt.png',
+    docx: '../../static/images/word.png',
+    doc: '../../static/images/word.png',
+    pdf: '../../static/images/pdf.webp',
+    xlsx: '../../static/images/excel.webp',
+    xls: '../../static/images/excel.webp',
+    csv: '../../static/images/excel.webp',
+  };
+
+  const FILE_ICONS_EMOJI = {
     txt: '📃',
     js: '💻',
     py: '🐍',
@@ -16,9 +20,19 @@ const FileRenderer = (() => {
     default: '📎'
   };
 
-  function getIcon(filename) {
+  function createIconElement(filename) {
     const ext = filename.split('.').pop().toLowerCase();
-    return FILE_ICONS[ext] || FILE_ICONS.default;
+    const imgSrc = FILE_ICON_IMAGES[ext];
+    if (imgSrc) {
+      const img = document.createElement('img');
+      img.src = imgSrc;
+      img.className = 'file-icon-img';
+      return img;
+    }
+    const span = document.createElement('span');
+    span.className = 'file-icon-emoji';
+    span.textContent = FILE_ICONS_EMOJI[ext] || FILE_ICONS_EMOJI.default;
+    return span;
   }
 
   function formatSize(bytes) {
@@ -34,7 +48,7 @@ const FileRenderer = (() => {
 
     const icon = document.createElement('div');
     icon.className = 'file-card-icon';
-    icon.textContent = getIcon(file.name);
+    icon.appendChild(createIconElement(file.name));
 
     const info = document.createElement('div');
     info.className = 'file-card-info';
@@ -56,13 +70,20 @@ const FileRenderer = (() => {
     const downloadBtn = document.createElement('button');
     downloadBtn.className = 'btn-download';
     downloadBtn.textContent = '下载';
-    downloadBtn.addEventListener('click', () => downloadFile(file));
+    downloadBtn.addEventListener('click', (e) => { e.stopPropagation(); downloadFile(file); });
 
     actions.appendChild(downloadBtn);
 
     card.appendChild(icon);
     card.appendChild(info);
     card.appendChild(actions);
+
+    const previewExts = ['.docx', '.doc', '.xlsx', '.xls', '.csv', '.pptx', '.ppt', '.pdf'];
+    const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+    if (file.path && previewExts.includes(fileExt)) {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => FilePreview.open(file.path));
+    }
 
     return card;
   }

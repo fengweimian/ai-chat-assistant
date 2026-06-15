@@ -1,17 +1,41 @@
 const SidebarManager = (() => {
   let activeConversationId = null;
+  let allConversations = [];
+  let searchTimer = null;
 
   function init() {
     document.getElementById('btn-new-chat').addEventListener('click', createNewChat);
+    document.getElementById('btn-new-window').addEventListener('click', () => window.api.window.newWindow());
+
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => filterConversations(searchInput.value.trim()), 200);
+    });
+
     loadConversations();
   }
 
-  async function loadConversations() {
-    const conversations = await window.api.conversations.getAll();
-    renderList(conversations);
+  function filterConversations(keyword) {
+    if (!keyword) {
+      renderList(allConversations);
+      return;
+    }
+    const lower = keyword.toLowerCase();
+    const filtered = allConversations.filter(conv => {
+      if ((conv.title || '').toLowerCase().includes(lower)) return true;
+      if (conv.messages && conv.messages.some(m => (m.content || '').toLowerCase().includes(lower))) return true;
+      return false;
+    });
+    renderList(filtered);
+  }
 
-    if (conversations.length > 0 && !activeConversationId) {
-      selectConversation(conversations[0].id);
+  async function loadConversations() {
+    allConversations = await window.api.conversations.getAll();
+    renderList(allConversations);
+
+    if (allConversations.length > 0 && !activeConversationId) {
+      selectConversation(allConversations[0].id);
     }
   }
 
@@ -63,9 +87,18 @@ const SidebarManager = (() => {
       const webSearch = document.getElementById('setting-web-search');
       const thinkingSelect = document.getElementById('setting-thinking');
 
-      if (modelSelect) modelSelect.value = conv.settings.model || 'gpt-5.5';
+      if (modelSelect && conv.settings.model) {
+        modelSelect.value = conv.settings.model;
+        if (!modelSelect.value) {
+          const firstOpt = modelSelect.querySelector('option');
+          if (firstOpt) modelSelect.value = firstOpt.value;
+        }
+        modelSelect.dispatchEvent(new Event('change'));
+      }
       if (webSearch) webSearch.checked = conv.settings.webSearch !== false;
       if (thinkingSelect) thinkingSelect.value = conv.settings.thinkingLevel || 'medium';
+      const developerToggle = document.getElementById('setting-developer');
+      if (developerToggle) developerToggle.checked = conv.settings.developerMode === true;
     }
 
     document.querySelectorAll('.conv-item').forEach(item => {

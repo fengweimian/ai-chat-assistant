@@ -1,18 +1,101 @@
 {
   "name": "ai-chat-assistant",
-  "version": "1.0.0",
+  "version": "5.2.1",
   "description": "Electron AI Chat Application",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev",
+    "build": "electron-builder --win",
+    "build:installer": "electron-builder --win nsis",
+    "build:portable": "electron-builder --win portable",
+    "lint": "eslint src/ main.js eslint.config.js",
+    "test": "vitest run"
   },
   "dependencies": {
-    "marked": "^15.0.0",
+    "chart.js": "^4.5.1",
+    "docx": "^9.7.1",
     "highlight.js": "^11.11.0",
-    "pptxgenjs": "^3.12.0"
+    "iconv-lite": "^0.7.2",
+    "imapflow": "^1.4.0",
+    "jszip": "^3.10.1",
+    "katex": "^0.17.0",
+    "mammoth": "^1.12.0",
+    "marked": "^15.0.0",
+    "mermaid": "^11.15.0",
+    "mysql2": "^3.22.5",
+    "nodemailer": "^8.0.11",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^6.0.227",
+    "pg": "^8.21.0",
+    "pptxgenjs": "^3.12.0",
+    "sql.js": "^1.14.1",
+    "tesseract.js": "^7.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "electron": "^35.0.0"
+    "@eslint/js": "^10.0.1",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12",
+    "eslint": "^10.5.0",
+    "vitest": "^4.1.9"
+  },
+  "build": {
+    "appId": "com.ai-chat-assistant.app",
+    "productName": "AI Chat Assistant",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "static/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "data",
+        "to": "data",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "src/main/ocr_script.py",
+        "to": "ocr_script.py"
+      },
+      {
+        "from": "static/LibreOfficePortable_26.2.1_MultilingualAll.paf.exe",
+        "to": "LibreOfficePortable.paf.exe"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AI Chat Assistant"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    }
   }
 }
