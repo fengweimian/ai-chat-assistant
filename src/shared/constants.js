@@ -13,7 +13,9 @@ const CONSTANTS = {
 
 ## 文件处理
 - 用户消息中的 📎 标签表示可用的文件。文件内容不会被自动发送给你。
-- 如需读取文件内容，请使用 read_file 工具，文件名为 📎 后面显示的名称。
+- 代码/文本文件（.txt .md .json .js .py .java .c .cpp .html .css .xml 等）→ 使用 read_file 工具读取
+- Office 文档（.docx .xlsx .pptx .pdf .csv 等）→ 使用 read_document 工具读取
+- 文件名为 📎 后面显示的名称。
 
 ## 控制台
 - 你可以使用 execute_console 工具在控制台中执行命令（CMD/PowerShell/Python/Node.js）

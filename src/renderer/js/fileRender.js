@@ -12,6 +12,7 @@ const FileRenderer = (() => {
 
   const FILE_ICONS_EMOJI = {
     txt: '📃',
+    md: '📝',
     js: '💻',
     py: '🐍',
     html: '🌐',
@@ -78,7 +79,7 @@ const FileRenderer = (() => {
     card.appendChild(info);
     card.appendChild(actions);
 
-    const previewExts = ['.docx', '.doc', '.xlsx', '.xls', '.csv', '.pptx', '.ppt', '.pdf'];
+    const previewExts = ['.docx', '.doc', '.xlsx', '.xls', '.csv', '.pptx', '.ppt', '.pdf', '.md', '.txt'];
     const fileExt = '.' + file.name.split('.').pop().toLowerCase();
     if (file.path && previewExts.includes(fileExt)) {
       card.style.cursor = 'pointer';

@@ -11,6 +11,25 @@ function register(ipcMain, { fileCreator, fileParser, filePreviewHandler, downlo
     return dest;
   });
 
+  ipcMain.handle('file:saveBuffer', async (_, fileName, arrayBuffer) => {
+    const destDir = path.join(app.getPath('userData'), 'data', 'files');
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    const dest = path.join(destDir, fileName);
+    fs.writeFileSync(dest, Buffer.from(arrayBuffer));
+    return dest;
+  });
+
+  ipcMain.handle('file:saveImage', async (_, dataUrl, fileName) => {
+    const destDir = path.join(app.getPath('userData'), 'data', 'files');
+    if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+    const base64 = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+    const ext = path.extname(fileName) || '.png';
+    const safeName = `img_${Date.now()}_${Math.random().toString(36).slice(2, 5)}${ext}`;
+    const dest = path.join(destDir, safeName);
+    fs.writeFileSync(dest, Buffer.from(base64, 'base64'));
+    return dest;
+  });
+
   ipcMain.handle('file:preview', async (_, filePath) => {
     return await filePreviewHandler.preview(filePath);
   });

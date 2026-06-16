@@ -1,7 +1,4 @@
-node_modules/
-dist/
-data/
-*.asar
-Thumbs.db
-*.log
+
+# Temp files
+temp_gi.txt
 static/*.paf.exe

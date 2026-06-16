@@ -76,11 +76,24 @@ const FileUploader = (() => {
           continue;
         }
         const reader = new FileReader();
-        reader.onload = (e) => {
-          attachedImages.push(e.target.result);
+        reader.onload = async (e) => {
+          const savedPath = await window.api.file.saveImage(e.target.result, file.name);
+          attachedImages.push({ dataUrl: e.target.result, path: savedPath });
           updatePreview();
         };
         reader.readAsDataURL(file);
+      } else if (DOC_EXTENSIONS.includes(ext)) {
+        if (file.size > 50 * 1024 * 1024) {
+          alert(`文件太大: ${file.name} (最大 50MB)`);
+          continue;
+        }
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const savedPath = await window.api.file.saveBuffer(file.name, e.target.result);
+          attachedDocuments.push({ name: file.name, path: savedPath, ext });
+          updatePreview();
+        };
+        reader.readAsArrayBuffer(file);
       }
     }
   }
@@ -101,7 +114,7 @@ const FileUploader = (() => {
       item.className = 'image-preview-item';
 
       const img = document.createElement('img');
-      img.src = imgData;
+      img.src = imgData.dataUrl || imgData;
 
       const removeBtn = document.createElement('button');
       removeBtn.className = 'remove-image';

@@ -116,7 +116,9 @@ const ChatManager = (() => {
         docPaths.push(doc.path);
       }
     }
-    addMessageToUI('user', content, images, [], docNames, docPaths);
+    const imageUrls = images.map(img => img.dataUrl || img);
+    const imagePaths = images.map(img => img.path).filter(Boolean);
+    addMessageToUI('user', content, imageUrls, [], docNames, docPaths);
 
     document.getElementById('message-input').value = '';
     ChatManager.clearImagePreview();
@@ -145,7 +147,8 @@ const ChatManager = (() => {
         role: 'user',
         content,
         fullContent: fullContent !== content ? fullContent : undefined,
-        images,
+        images: imageUrls,
+        imagePaths: imagePaths.length > 0 ? imagePaths : undefined,
         docNames: docNames.length > 0 ? docNames : undefined,
         docPaths: docPaths.length > 0 ? docPaths : undefined
       });
@@ -180,9 +183,10 @@ const ChatManager = (() => {
     window.api.chat.send({
       conversationId: currentConversationId,
       content: fullContent,
-      images,
+      images: imageUrls,
       docNames: docNames.length > 0 ? docNames : undefined,
-      docPaths: docPaths.length > 0 ? docPaths : undefined
+      docPaths: docPaths.length > 0 ? docPaths : undefined,
+      imagePaths: imagePaths.length > 0 ? imagePaths : undefined
     });
 
     await window.api.conversations.addMessage(currentConversationId, {
@@ -322,7 +326,8 @@ const ChatManager = (() => {
       content: lastUserMsg.fullContent || lastUserMsg.content,
       images: lastUserMsg.images || [],
       docNames: lastUserMsg.docNames,
-      docPaths: lastUserMsg.docPaths
+      docPaths: lastUserMsg.docPaths,
+      imagePaths: lastUserMsg.imagePaths
     });
   }
 

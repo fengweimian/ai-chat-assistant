@@ -3,7 +3,7 @@ function register(ipcMain, { apiClient, store, modelStore }) {
     apiClient.abort();
   });
 
-  ipcMain.on('chat:send', (event, { conversationId, content, images, docNames, docPaths }) => {
+  ipcMain.on('chat:send', (event, { conversationId, content, images, docNames, docPaths, imagePaths }) => {
     const conversation = store.getById(conversationId);
     if (!conversation) {
       event.sender.send('chat:error', 'Conversation not found');
@@ -20,12 +20,20 @@ function register(ipcMain, { apiClient, store, modelStore }) {
       modelConfig = modelStore.getDefault();
     }
 
-    apiClient._conversation = conversation;
+    apiClient._conversation = {
+      ...conversation,
+      messages: [
+        ...conversation.messages,
+        { role: 'user', content, images, docNames: docNames || [], docPaths: docPaths || [], imagePaths: imagePaths || [] }
+      ]
+    };
 
     apiClient.streamChat(
       conversation,
       content,
       images,
+      docNames,
+      docPaths,
       (chunk) => event.sender.send('chat:chunk', { conversationId, chunk }),
       (fullContent, fullThinking) => event.sender.send('chat:done', { conversationId, fullContent, fullThinking }),
       (error) => event.sender.send('chat:error', { conversationId, error }),

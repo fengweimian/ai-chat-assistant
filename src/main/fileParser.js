@@ -7,6 +7,15 @@ const pdfParse = require('pdf-parse');
 
 const MAX_TEXT_LENGTH = 50000;
 
+const TEXT_EXTENSIONS = new Set([
+  '.txt', '.md', '.json', '.xml', '.html', '.css', '.js', '.ts', '.py', '.java', '.c', '.cpp',
+  '.yaml', '.yml', '.toml', '.ini', '.cfg', '.conf', '.env', '.properties',
+  '.sh', '.bash', '.bat', '.cmd', '.ps1',
+  '.rb', '.go', '.rs', '.php', '.sql', '.r', '.swift', '.kt', '.lua', '.scala', '.dart',
+  '.vue', '.svelte', '.h', '.hpp', '.cs',
+  '.tex', '.svg', '.log', '.tsv',
+]);
+
 class FileParser {
   async parse(filePath) {
     const ext = path.extname(filePath).toLowerCase();
@@ -30,21 +39,11 @@ class FileParser {
       case '.pdf':
         text = await this.parsePdf(filePath);
         break;
-      case '.txt':
-      case '.md':
-      case '.json':
-      case '.xml':
-      case '.html':
-      case '.css':
-      case '.js':
-      case '.ts':
-      case '.py':
-      case '.java':
-      case '.c':
-      case '.cpp':
-        text = fs.readFileSync(filePath, 'utf-8');
-        break;
       default:
+        if (TEXT_EXTENSIONS.has(ext)) {
+          text = fs.readFileSync(filePath, 'utf-8');
+          break;
+        }
         throw new Error(`不支持的文件类型: ${ext}`);
     }
 
@@ -134,8 +133,7 @@ class FileParser {
 
   getSupportedExtensions() {
     return ['.docx', '.doc', '.xlsx', '.xls', '.csv', '.pptx', '.ppt', '.pdf',
-            '.txt', '.md', '.json', '.xml', '.html', '.css', '.js', '.ts', '.py',
-            '.java', '.c', '.cpp'];
+            ...TEXT_EXTENSIONS];
   }
 }
 

@@ -191,7 +191,9 @@ contextBridge.exposeInMainWorld('api', {
     parse: (filePath) => ipcRenderer.invoke('file:parse', filePath),
     save: (sourcePath, suggestedName) => ipcRenderer.invoke('file:save', sourcePath, suggestedName),
     openLocation: (filePath) => ipcRenderer.invoke('file:openLocation', filePath),
-    copyToData: (sourcePath) => ipcRenderer.invoke('file:copyToData', sourcePath)
+    copyToData: (sourcePath) => ipcRenderer.invoke('file:copyToData', sourcePath),
+    saveBuffer: (fileName, buffer) => ipcRenderer.invoke('file:saveBuffer', fileName, buffer),
+    saveImage: (dataUrl, fileName) => ipcRenderer.invoke('file:saveImage', dataUrl, fileName)
   },
   // Window controls
   window: {

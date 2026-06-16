@@ -117,6 +117,28 @@ const toolHandlers = {
     if (!filePath) return '文件路径不可用';
     try {
       if (!fs.existsSync(filePath)) return `文件不存在: ${filePath}`;
+      return fs.readFileSync(filePath, 'utf-8').substring(0, 30000);
+    } catch (e) {
+      return `读取失败: ${e.message}`;
+    }
+  },
+
+  read_document: async (args, ctx) => {
+    const messages = ctx.conversation?.messages || [];
+    const fileMsg = [...messages].reverse().find(m =>
+      m.docNames && m.docNames.includes(args.fileName)
+    );
+    if (!fileMsg || !fileMsg.docNames || fileMsg.docNames.length === 0) {
+      return '当前对话中没有上传的文件';
+    }
+    const idx = fileMsg.docNames.indexOf(args.fileName);
+    if (idx === -1) {
+      return `未找到文件"${args.fileName}"。可用文件: ${fileMsg.docNames.join(', ')}`;
+    }
+    const filePath = fileMsg.docPaths?.[idx];
+    if (!filePath) return '文件路径不可用';
+    try {
+      if (!fs.existsSync(filePath)) return `文件不存在: ${filePath}`;
       const parsed = await ctx.fileParser.parse(filePath);
       return `[文件内容: ${parsed.fileName}]\n${parsed.text}`;
     } catch (e) {
@@ -141,7 +163,23 @@ const toolHandlers = {
   },
 
   ocr_image: async (args, ctx) => {
-    const ocrText = await ctx.ocr.recognize(args.imagePath);
+    const messages = ctx.conversation?.messages || [];
+    let imagePath = args.imagePath;
+
+    if (!imagePath || !fs.existsSync(imagePath)) {
+      const imgMsg = [...messages].reverse().find(m =>
+        m.imagePaths && m.imagePaths.length > 0
+      );
+      if (imgMsg) {
+        imagePath = imgMsg.imagePaths[0];
+      }
+    }
+
+    if (!imagePath || !fs.existsSync(imagePath)) {
+      return '未找到可识别的图片。请确保图片已上传并保存。';
+    }
+
+    const ocrText = await ctx.ocr.recognize(imagePath);
     return ocrText || '未识别到文字';
   },
 

@@ -64,8 +64,12 @@ class ApiClient {
 
     for (const msg of conversation.messages) {
       if (msg.role === 'user') {
+        let textContent = msg.content;
+        if (msg.docNames && msg.docNames.length > 0) {
+          textContent += '\n\n[附件: ' + msg.docNames.map(n => n + ' 📎').join(', ') + ']';
+        }
         if (msg.images && msg.images.length > 0) {
-          const content = [{ type: 'text', text: msg.content }];
+          const content = [{ type: 'text', text: textContent }];
           for (const img of msg.images) {
             content.push({
               type: 'image_url',
@@ -74,7 +78,7 @@ class ApiClient {
           }
           messages.push({ role: 'user', content });
         } else {
-          messages.push({ role: 'user', content: msg.content });
+          messages.push({ role: 'user', content: textContent });
         }
       } else if (msg.role === 'assistant') {
         messages.push({ role: 'assistant', content: msg.content });
@@ -129,7 +133,7 @@ class ApiClient {
     return 'none';
   }
 
-  async streamChat(conversation, userContent, images, onChunk, onDone, onError, modelConfig, onThinking, onSearching, onUsage, onFileCreated) {
+  async streamChat(conversation, userContent, images, docNames, docPaths, onChunk, onDone, onError, modelConfig, onThinking, onSearching, onUsage, onFileCreated) {
     const settings = conversation.settings;
     const baseUrl = modelConfig ? modelConfig.baseUrl : this.baseUrl;
     const apiKey = modelConfig ? modelConfig.apiKey : this.apiKey;
@@ -249,7 +253,16 @@ class ApiClient {
       type: 'function',
       function: {
         name: 'read_file',
-        description: '读取用户上传的文件内容。用户消息中的 📎 标签就是可用的文件。文件内容不会被自动发送，需要你主动调用此工具读取。输入文件名为 📎 后面显示的名称。',
+        description: '读取代码/文本文件内容（.txt .md .json .js .py .java .c .cpp .html .css .xml 等）。用户消息中的 📎 标签就是可用的文件。如需读取 Office 文档请使用 read_document。',
+        parameters: { type: 'object', properties: { fileName: { type: 'string', description: '📎 后面显示的文件名' } }, required: ['fileName'] }
+      }
+    });
+
+    toolsList.push({
+      type: 'function',
+      function: {
+        name: 'read_document',
+        description: '读取 Office 文档内容（Word .docx、Excel .xlsx、PPT .pptx、PDF .pdf、CSV .csv）。用户消息中的 📎 标签就是可用的文件。如需读取代码文件请使用 read_file。',
         parameters: { type: 'object', properties: { fileName: { type: 'string', description: '📎 后面显示的文件名' } }, required: ['fileName'] }
       }
     });
@@ -294,8 +307,8 @@ class ApiClient {
       type: 'function',
       function: {
         name: 'ocr_image',
-        description: '使用本地OCR识别图片中的文字（支持中英文），当你无法直接看到图片内容时使用此工具',
-        parameters: { type: 'object', properties: { imagePath: { type: 'string', description: '图片文件路径' } }, required: ['imagePath'] }
+        description: '使用本地OCR识别图片中的文字（支持中英文）。不传参数则自动识别对话中最新的图片。',
+        parameters: { type: 'object', properties: { imagePath: { type: 'string', description: '可选。图片文件路径，留空则自动识别对话中最近的图片' } }, required: [] }
       }
     });
 
@@ -361,7 +374,7 @@ class ApiClient {
 
     const tempConv = {
       ...conversation,
-      messages: [...conversation.messages, { role: 'user', content: userContent, images }]
+      messages: [...conversation.messages, { role: 'user', content: userContent, images, docNames, docPaths }]
     };
     const messages = this.buildMessages(tempConv);
 

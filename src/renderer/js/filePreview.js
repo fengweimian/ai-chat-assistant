@@ -30,6 +30,10 @@ const FilePreview = (() => {
         await renderPdf(body, data.path);
       } else if (data.type === 'pptx-text') {
         renderPptxText(body, data.slides);
+      } else if (data.type === 'markdown') {
+        renderMarkdown(body, data.content);
+      } else if (data.type === 'text') {
+        renderText(body, data.content);
       } else if (data.type === 'unsupported') {
         body.innerHTML = `<div class="preview-error">${data.error}</div>`;
       }
@@ -88,6 +92,22 @@ const FilePreview = (() => {
     });
     html += '</div>';
     container.innerHTML = html;
+  }
+
+  function renderMarkdown(container, content) {
+    const html = MarkdownRenderer.render(content);
+    container.innerHTML = `<div class="preview-doc preview-markdown">${html}</div>`;
+    if (typeof mermaid !== 'undefined') {
+      try { mermaid.run({ nodes: container.querySelectorAll('.mermaid:not([data-processed])') }); } catch (e) {}
+    }
+    if (typeof hljs !== 'undefined') {
+      container.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+    }
+  }
+
+  function renderText(container, content) {
+    const escaped = content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    container.innerHTML = `<div class="preview-text"><pre>${escaped}</pre></div>`;
   }
 
   return { init, open, close };

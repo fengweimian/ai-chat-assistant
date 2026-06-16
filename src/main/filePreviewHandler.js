@@ -83,6 +83,16 @@ class FilePreviewHandler {
       case '.xlsx': case '.xls': case '.csv': return await this.previewXlsx(filePath);
       case '.pptx': case '.ppt': return await this.previewPptxText(filePath);
       case '.pdf': return { type: 'pdf', path: filePath };
+      case '.md': return this.previewMarkdown(filePath);
+      case '.txt': case '.log': case '.json': case '.xml': case '.yaml': case '.yml':
+      case '.toml': case '.ini': case '.sh': case '.bat': case '.ps1':
+      case '.py': case '.js': case '.ts': case '.rb': case '.go': case '.rs':
+      case '.php': case '.sql': case '.r': case '.swift': case '.kt': case '.lua':
+      case '.scala': case '.dart': case '.vue': case '.svelte':
+      case '.css': case '.html': case '.tex': case '.svg': case '.env':
+      case '.cfg': case '.conf': case '.properties':
+      case '.h': case '.hpp': case '.c': case '.cpp': case '.java': case '.cs':
+        return this.previewText(filePath);
       default: return { type: 'unsupported', error: `不支持预览: ${ext}` };
     }
   }
@@ -123,6 +133,19 @@ class FilePreviewHandler {
       i++;
     }
     return { type: 'pptx-text', slides, title: path.basename(filePath) };
+  }
+
+  async previewMarkdown(filePath) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return { type: 'markdown', content, title: path.basename(filePath) };
+  }
+
+  async previewText(filePath) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const truncated = content.length > 100000
+      ? content.substring(0, 100000) + '\n\n[... 文件过大，已截断 ...]'
+      : content;
+    return { type: 'text', content: truncated, title: path.basename(filePath) };
   }
 }
 
